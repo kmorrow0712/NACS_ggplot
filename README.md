@@ -1,13 +1,13 @@
 
-# Plotting with ggplot
-## A simple tutorial & demonstration of how easy it is to use ggplot to create beautiful plots
-### Kelly Morrow, NACS Methods Seminar, October 4th, 2019
+## Plotting with ggplot
+### A simple tutorial & demonstration of how easy it is to use ggplot to create beautiful plots
+Kelly Morrow, NACS Methods Seminar, October 4th, 2019
 
 
 
 
 
-# A plug for Binder! 
+A plug for Binder! 
 # Specifying an R environment with a runtime.txt file
 
 Jupyter+R: [![Binder](http://mybinder.org/badge_logo.svg)](http://mybinder.org/v2/gh/binder-examples/r/master?filepath=index.ipynb)
