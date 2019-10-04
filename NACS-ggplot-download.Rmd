@@ -1,0 +1,449 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Set up your environment
+Tell R which libraries you need to get started. These should all run here, but if using your own R environment you may have to install any libraries not previously installed. If you find they aren't running, uncomment the install.packages line.
+
+Normally I would import and transform my data here, but for the sake of time we're using pre-loaded datasets today.
+
+```{r}
+# Libraries
+
+# install.packages("ggplot2")
+
+library(ggplot2)
+
+# Load iris dataset
+
+data(iris)   
+
+head(iris)  # peak at first few rows of data
+```
+Let's get a quick summary of our dataset using the summary() function. We'll get some descriptives for continuous variables and counts for discrete, categorical variables.
+
+```{r}
+
+summary(iris)
+
+```
+
+Setting up ggplot
+#First we need to specify which dataset we would like to graph and what variables to use for the X and Y axes.
+
+The code will follow this format: ggplot(DATASET, aes(x = XVARIABLE, y = YVARIABLE))
+
+This can get more complicated as we create different plots or want to sort our data by specifics values, etc, but for now we'll keep it simple.
+
+Below I've told ggplot I want to plot petal length vs. petal width
+
+```{r}
+ggplot(iris, aes(x = Petal.Length, y = Petal.Width))
+
+```
+### Okay... but it's empty?
+
+ggplot doesn't make any assumptions about *how* you want to plot your data. We need to specify using a geom. 
+
+Because we have two continuous variables, let's look at a scatter plot using `geom_point()`
+
+```{r}
+ggplot(iris, aes(x = Petal.Length, y = Petal.Width)) +
+geom_point()
+```
+
+Looks like a strong positive linear relationship between petal length and width -- not surprising. But what about the cluster that is smallest, is there information missing that might make this clearer?
+
+We can add an **aesthetic** to the geom, telling ggplot to color the data points based on their Species
+
+```{r}
+ggplot(iris, aes(x = Petal.Length, y = Petal.Width)) +
+geom_point(aes(color = Species)) 
+```
+So with two lines of code we have a decent looking graph that gives you a sense of your data. But there is so much more we can do to make it look nicer and more presentable.
+
+Let's first rename our axes and add a title.
+```{r}
+ggplot(iris, aes(x = Petal.Length, y = Petal.Width)) +
+geom_point(aes(color = Species)) +
+labs(title = "Petal Length and Width by Iris Species",
+    x = "Petal Length (cm)",
+    y = "Petal Width (cm)")
+```
+
+
+It's generally poor practice to have different numbers of decimal places on the same graph, let's change that.
+
+Because X is an **aesthetic** of the graph, we can control how it is mapped using the `scale_<aesthetic>_<type>` scheme. 
+
+(Don't worry too much about the rounding process, it's just a simple function telling ggplot to round X to 1 decimal place.)
+
+```{r}
+ggplot(iris, aes(x = Petal.Length, y = Petal.Width)) +
+geom_point(aes(color = Species)) +
+labs(title = "Petal Length and Width by Iris Species",
+    x = "Petal Length (cm)",
+    y = "Petal Width (cm)") +
+scale_x_continuous(labels=function(x){sprintf("%.1f", x)}) 
+```
+
+A lot of times we want to specify the colors of our points, not just use ggplot presets. 
+
+We can do this again using the `scale_<aes>_<type>` format again, which allows us to change a lot of aspects about that specific aesthetic. Let's knock out two birds with one code and change the legend labels *and* colors.
+
+ggplot takes both hex codes and characters for colors.
+
+```{r}
+ggplot(iris, aes(x = Petal.Length, y = Petal.Width)) +
+geom_point(aes(color = Species)) +
+scale_color_manual(values = c("setosa" = "yellow", 
+                              "versicolor" = "#FF5733", 
+                              "virginica" = "#900C3F"),
+                   labels = c("iris setosa", 
+                              "iris versicolor",
+                              "iris virginica")) +
+labs(title = "Petal Length and Width by Iris Species",
+    x = "Petal Length (cm)",
+    y = "Petal Width (cm)") +
+scale_x_continuous(labels=function(x){sprintf("%.1f", x)})
+```
+
+```{r}
+# We could also alter the shape, size, and transparency used for each species 
+#(this might be a little overkill for these data specifically)
+
+ggplot(iris, aes(x = Petal.Length, y = Petal.Width)) +
+geom_point(aes(color = Species,
+               shape = Species),
+          size = 2,
+          alpha = .75) +
+scale_color_manual(values = c("setosa" = "yellow", 
+                              "versicolor" = "#FF5733", 
+                              "virginica" = "#900C3F"),
+                   labels = c("Setosa", 
+                              "Versicolor",
+                              "Virginica")) +
+labs(title = "Petal Length and Width by Iris Species",
+    x = "Petal Length (cm)",
+    y = "Petal Width (cm)") +
+scale_x_continuous(labels=function(x){sprintf("%.1f", x)}) 
+```
+
+
+### Now we have two legends! Crap. 
+
+This was a giant source of frustration when I started using ggplot. It creates a legend for every aesthetic. We can get rid of the second legend a few ways:
+
+1. Create another `scale_<aes>_<type>` line for shape and have the values match the `scale_color_manual` values exactly.
+
+2. Use the `guides()` line and tell it to hide the shapes legend
+
+We'll use #2 because it's shortest and we're not really looking to specify anything else about the shapes. 
+
+```{r}
+ggplot(iris, aes(x = Petal.Length, y = Petal.Width)) +
+geom_point(aes(color = Species,
+               shape = Species),
+          size = 2.5,
+          alpha = 0.75) +
+guides(shape = FALSE) +
+scale_color_manual(values = c("setosa" = "yellow", 
+                              "versicolor" = "#FF5733", 
+                              "virginica" = "#900C3F"),
+                   labels = c("Setosa", 
+                              "Versicolor",
+                              "Virginica")) +
+labs(title = "Petal Length and Width by Iris Species",
+    x = "Petal Length (cm)",
+    y = "Petal Width (cm)") +
+scale_x_continuous(labels=function(x){sprintf("%.1f", x)}) 
+```
+
+### Our geom is looking pretty sweet now, but there are some features of the legend and graph itself that could be better. 
+
+There are a million things you can change with ggplot, but we'll start simple.
+
+### Let's start by changing the preset theme to another built-in theme:
+
+The light theme (`theme_light()`) is a good option to start with
+
+```{r}
+ggplot(iris, aes(x = Petal.Length, y = Petal.Width)) +
+geom_point(aes(color = Species,
+               shape = Species),
+          size = 2.5,
+          alpha = 0.75) +
+guides(shape = FALSE) +
+scale_color_manual(values = c("setosa" = "yellow", 
+                              "versicolor" = "#FF5733", 
+                              "virginica" = "#900C3F"),
+           labels = c("Iris setosa", 
+                              "Iris versicolor",
+                              "Iris virginica")) +
+labs(title = "Petal Length and Width by Iris Species",
+    x = "Petal Length (cm)",
+    y = "Petal Width (cm)") +
+scale_x_continuous(labels=function(x){sprintf("%.1f", x)}) +
+theme_light()
+```
+
+### We can also create a custom theme and/or change elements of the theme we don't like using `theme()`. 
+
+In doing so, we can change almost any aspect of the plot (there are a bunch of online guides for this). 
+
+Let's start by:
+
+1. Centering the title
+2. Changing the axis text
+3. Changing the legend text
+4. Outlining the legend
+
+```{r}
+ggplot(iris, aes(x = Petal.Length, y = Petal.Width)) +
+geom_point(aes(color = Species,
+               shape = Species),
+          size = 2.5,
+          alpha = 0.75) +
+guides(shape = FALSE) +
+scale_color_manual(values = c("setosa" = "yellow", 
+                              "versicolor" = "#FF5733", 
+                              "virginica" = "#900C3F"),
+                   labels = c("Iris setosa", 
+                              "Iris versicolor",
+                              "Iris virginica")) +
+labs(title = "Petal Length and Width by Iris Species",
+    x = "Petal Length (cm)",
+    y = "Petal Width (cm)") +
+scale_x_continuous(labels=function(x){sprintf("%.1f", x)}) +
+theme_light() +
+theme(
+plot.title = element_text(hjust = 0.5, face = "bold"),             # Center & bold plot title
+legend.title = element_text(face = "bold", size = 9, hjust = 0.5), # Bold and center legend title
+axis.title = element_text(face = "bold"),                          # Bold axes titles
+legend.box.background = element_rect(colour = "black"),            # Put a box around the legend
+legend.text = element_text(face = "italic")) 
+```
+
+
+## And now... We save!
+
+Need a specific dpi? file type? size? ggplot has your back. 
+
+First we'll save the plot as a variable and then call upon `ggsave`
+
+### **WARNING:** Always check your output file, do not assume it will look like R's preview image!
+
+### Save to a variable
+
+I always save this part until the end so that R automatically generates previews as I add to my graph. If you assign to a variable, you will have to call upon that variable to generate the plot. 
+
+An aside: Some people like to work like this in a way by assigning the data specification to a variable and adding to it (I don't). 
+
+For example: 
+
+
+    plot <- ggplot(data, aes(x = x, y = y))
+    
+    # and to add:
+    plot + geom_point()`
+    
+```{r}
+iris.plot <- ggplot(iris, aes(x = Petal.Length, y = Petal.Width)) +
+geom_point(aes(color = Species,
+               shape = Species),
+          size = 2.5,
+          alpha = 0.75) +
+guides(shape = FALSE) +
+scale_color_manual(values = c("setosa" = "yellow", 
+                              "versicolor" = "#FF5733", 
+                              "virginica" = "#900C3F"),
+                   labels = c("Iris setosa", 
+                              "Iris versicolor",
+                              "Iris virginica")) +
+labs(title = "Petal Length and Width by Iris Species",
+    x = "Petal Length (cm)",
+    y = "Petal Width (cm)") +
+scale_x_continuous(labels=function(x){sprintf("%.1f", x)}) +
+theme_light() +
+theme(
+plot.title = element_text(hjust = 0.5, face = "bold"),
+legend.title = element_text(face = "bold", size = 9, hjust = 0.5),
+axis.title = element_text(face = "bold"),
+legend.box.background = element_rect(colour = "black"),
+legend.text = element_text(face = "italic")) 
+```
+
+And then call upon ggsave in this format:
+
+ggsave("FILENAME.png", DATA, height = X, width = X, unit = "IN", dpi = XXX)
+
+```{r}
+ggsave("iris_plot.png", iris.plot, heigh = 3, width = 3, unit = "in", dpi = 300)
+```
+
+
+## The iris dataset is nice -- it's small and it makes sense. Rarely does this happen in the real world. 
+As scientists, we're more accustom to looking at large, unwieldy datasets. 
+
+The diamonds dataset is not a terrible dataset, but it's huge (50,000+ data points). Let's load it in and play around with it. 
+
+```{r}
+data(diamonds)
+summary(diamonds)
+head(diamonds)
+```
+
+### Our data set up scheme is the same, we're just adding in a different dataset and variables. 
+
+```{r}
+ggplot(diamonds, aes( x = carat, y = price)) +
+geom_point()
+```
+
+
+### Yeah, that's a lot of data...
+
+Maybe if we add another dimension to the plot we can get a clearer picture of what impacts diamond pricing. 
+
+We can do this using `facet_grid()` which generates mutliple plots, separating the data by a specified variable.
+
+Let's look at whether diamond color impacts pricing (I also added color as an aesthetic because why not). 
+
+```{r}
+ggplot(diamonds, aes( x = carat, y = price)) +
+geom_point(aes(color = color)) +
+facet_grid(color ~ .)
+```
+
+We can also add a regression model to each one of these facets easily.
+
+For now we'll use a simple linear model, but there are a lot of other models available beyond the scope of this little tutorial.
+
+Let's also get rid of the legend generated for color using the guides() line
+
+```{r}
+ggplot(diamonds, aes( x = carat, y = price)) +
+geom_point(aes(color = color)) +
+stat_smooth(method = "lm", se = FALSE, color = "black") +
+facet_grid(color ~ .) +
+guides(color = FALSE)
+```
+
+### Looking at distributions
+
+If you're more interested in the distribution of your data, there are a few options. First we'll create a plot using my favorite method, density ridges. 
+
+`ggridges` is an excellent package to generate pretty distribution plots. 
+
+We'll use ggrdiges to look at the distribution of pricing varies by a diamond's cut.
+
+```{r}
+install.packages("ggridges")
+library(ggridges)
+
+
+ggplot(diamonds, aes(x = price, y = cut, fill = cut)) +
+  stat_density_ridges(scale = 3,                # change how compact the curves are
+                      alpha = 0.85,             # create a bit of transparency
+                      quantiles = 2,            # separate into 2 quantiles to show the mean
+                      quantile_lines = TRUE,    # show the quantile lines
+                      size = 1) +               # change the thickness of the distribution plots
+guides(fill = FALSE) +
+  theme_ridges()                                # use ggridge's theme because it's nice
+```
+
+We can also look at the distribution using a violin plot and easily add in quartiles and means. 
+
+I took the liberty to change the theme to `theme_bw()` and flip the coordinates `coord_flip()`
+
+Again, I removed the pesky legends generated for the fill and color aesthetics. 
+
+```{r}
+# We can also add some summary info, like quartiles and means quickly
+# and also remove legends that aren't needed -- you can comment out the guides line and see what happens!
+
+ggplot(diamonds, aes(x = cut, y = price, color = cut, fill = cut)) +
+geom_violin(draw_quantiles = c(0.25, 0.5, 0.75),
+           size = 1,
+           alpha = 0.75) +
+stat_summary(fun.y=mean, geom='point', color = "black") +
+guides(fill = FALSE, color = FALSE) +
+theme_bw() + 
+coord_flip()
+```
+
+### Now we can mess around with the theme.
+
+I've commented out some `theme()` lines that will change different elements of the plot. Trying playing around with them and see how the plot changes!
+
+I couldn't possibly go through all of them, and it's a Friday evening, so I'll point you to Google for a complete list of `theme()` options
+
+```{r}
+ggplot(diamonds, aes(x = cut, y = price, color = cut, fill = cut)) +
+geom_violin(draw_quantiles = c(0.25, 0.5, 0.75),
+           size = 1,
+           alpha = 0.75) +
+stat_summary(fun.y=mean, geom='point', color = "black") +
+guides(fill = FALSE, color = FALSE) +
+coord_flip() +
+theme_bw() + 
+theme(
+  #  panel.border = element_rect(fill = NA, size = 1),   # change plot border style
+  #  panel.background = element_rect(fill = "black"),    # change plot background color
+  #  panel.grid.major.y = element_blank(),               # uncomment to remove y axis grid lines
+  #  panel.grid.major.x = element_line(size = .75),      # change the size of major X grid
+    panel.grid.minor.x = element_line(size = .5, linetype = 3),   # change size & type of minor X grid 
+  #  axis.text = element_text(size = 7, face = "bold"),                 # change all axis text face and size
+  #  axis.title = element_text(size = 10, face = "bold", hjust = 1),    # change axis titles
+  #  axis.ticks = element_line(size = .2)  
+  
+)
+```
+
+## Bonus fun!
+
+The `ggthemes` package has some fun and useful pre-built themes.
+
+For instance, if your PI really wanted your plot to look like it's directly out of the Economist -- there's a theme for that. I won't ask questions, you shouldn't either. 
+
+```{r}
+install.packages("ggthemes")
+library(ggthemes)
+
+ggplot(diamonds, aes(x = cut, y = price, color = cut, fill = cut)) +
+geom_violin(draw_quantiles = c(0.25, 0.5, 0.75),
+           size = 1,
+           alpha = 0.75) +
+stat_summary(fun.y=mean, geom='point', color = "black") +
+guides(fill = FALSE, color = FALSE) +
+coord_flip() +
+#theme_economist() 
+theme_tufte()
+#theme_few()
+#theme_gdocs()
+#theme_excel()
+
+```
+
+
+### Take away points: 
+
+It's easy to create pretty plots in a relatively short amount of time once you get used to ggplot syntax. 
+
+Google is your friend while you learn.
+
+Don't make your plots *too* nice or you'll have to make them for your entire lab!
+
+
+## Resources:
+
+### Online course: http://r-statistics.co/Complete-Ggplot2-Tutorial-Part1-With-R-Code.html
+
+### R-graph gallery for inspiration (and code): https://www.r-graph-gallery.com/
+
+### ggplot cheatsheet: https://rstudio.com/wp-content/uploads/2015/03/ggplot2-cheatsheet.pdf
+
+### Tidyverse/CRAN info pages: https://ggplot2.tidyverse.org
+
+### Stackoverflow + Google (probably the most helpful resource)
